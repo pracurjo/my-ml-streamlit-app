@@ -12,6 +12,29 @@ st.set_page_config(
 )
 
 # =========================
+# UI FIX: Bigger Question, Smaller Option
+# =========================
+st.markdown("""
+<style>
+/* Question / label font bigger */
+label, .stSlider label, .stSelectbox label {
+    font-size: 1.15rem !important;
+    font-weight: 600;
+}
+
+/* Selected option text smaller */
+div[data-baseweb="select"] span {
+    font-size: 0.9rem !important;
+}
+
+/* Slider value text smaller */
+.stSlider > div > div > div > div {
+    font-size: 0.85rem !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# =========================
 # Load Model Files
 # =========================
 @st.cache_resource
@@ -27,97 +50,58 @@ model, scaler, columns = load_files()
 # App Header
 # =========================
 st.title("❤️ Heart Disease Risk Prediction System")
-st.markdown("""
-এই অ্যাপটি আপনার স্বাস্থ্য সংক্রান্ত তথ্য ব্যবহার করে  
-**হার্ট ডিজিজ হওয়ার ঝুঁকি (%)** সহজ ভাষায় দেখায়।  
-ℹ️ ইনপুট ফিল্ডের পাশে থাকা **(?)** আইকনে মাউস রাখলে সংশ্লিষ্ট তথ্যের ব্যাখ্যা প্রদর্শিত হবে।
-
-
-""")
+st.write(
+    "This application estimates the **risk of heart disease (%)** "
+    "based on basic health information provided by the user."
+)
 
 st.markdown("---")
 
 # =========================
-# User Inputs (All with HELP)
+# User Inputs (FORMAT UNCHANGED)
 # =========================
-age = st.slider(
-    "Age (বয়স)",
-    18, 100, 40,
-    help="আপনার বর্তমান বয়স নির্বাচন করুন"
-)
+age = st.slider("Age", 18, 100, 40)
 
-sex = st.selectbox(
-    "Sex (লিঙ্গ)",
-    ["Male", "Female"],
-    help="Male = পুরুষ, Female = নারী"
-)
+sex = st.selectbox("Sex", ["Male", "Female"])
 
 chest_pain = st.selectbox(
-    "Chest Pain Type (বুকের ব্যথার ধরন)",
+    "Chest Pain Type",
     [
-        "Typical Angina",
-        "Atypical Angina",
-        "Non-Anginal Pain",
-        "Asymptomatic (কোনো ব্যথা নেই)"
-    ],
-    help="""
-Typical Angina: পরিশ্রম করলে বুকের মাঝখানে চাপ  
-Atypical Angina: অস্বাভাবিক বুক ব্যথা  
-Non-Anginal Pain: হার্টজনিত নয়  
-Asymptomatic: কোনো বুক ব্যথা নেই
-"""
+        "Typical Angina (chest pain during physical activity)",
+        "Atypical Angina (unusual chest pain)",
+        "Non-Anginal Pain (not heart related)",
+        "Asymptomatic (no chest pain)"
+    ]
 )
 
-resting_bp = st.slider(
-    "Resting Blood Pressure (mm Hg)",
-    80, 200, 120,
-    help="বিশ্রাম অবস্থায় রক্তচাপ (সাধারণত 120/80)"
-)
+resting_bp = st.slider("Resting Blood Pressure (mm Hg)", 80, 200, 120)
 
-cholesterol = st.slider(
-    "Cholesterol Level (mg/dL)",
-    100, 600, 200,
-    help="রক্তে কোলেস্টেরল (২০০ এর নিচে হলে ভালো)"
-)
+cholesterol = st.slider("Cholesterol Level (mg/dL)", 100, 600, 200)
 
-fasting_bs = st.selectbox(
-    "Fasting Blood Sugar > 120 mg/dL?",
-    ["No", "Yes"],
-    help="না খেয়ে রক্ত পরীক্ষা করলে সুগার 120 এর বেশি হলে Yes"
-)
+fasting_bs = st.selectbox("Fasting Blood Sugar > 120 mg/dL?", ["No", "Yes"])
 
 resting_ecg = st.selectbox(
     "Resting ECG Result",
-    ["Normal", "ST-T Abnormality", "Left Ventricular Hypertrophy"],
-    help="ECG পরীক্ষার ফলাফল"
+    [
+        "Normal",
+        "ST-T Abnormality (ECG changes)",
+        "Left Ventricular Hypertrophy (thickened heart wall)"
+    ]
 )
 
-max_hr = st.slider(
-    "Maximum Heart Rate Achieved",
-    60, 220, 150,
-    help="ব্যায়াম বা হাঁটার সময় সর্বোচ্চ হার্ট রেট"
-)
+max_hr = st.slider("Maximum Heart Rate Achieved", 60, 220, 150)
 
-exercise_angina = st.selectbox(
-    "Chest Pain During Exercise?",
-    ["No", "Yes"],
-    help="ব্যায়ামের সময় বুক ব্যথা হলে Yes নির্বাচন করুন"
-)
+exercise_angina = st.selectbox("Chest Pain During Exercise?", ["No", "Yes"])
 
-oldpeak = st.slider(
-    "Oldpeak (ST Depression Level)",
-    0.0, 6.0, 1.0,
-    help="Exercise সময় ECG তে ST segment কতটা নিচে নামে"
-)
+oldpeak = st.slider("Oldpeak (ST Depression during exercise)", 0.0, 6.0, 1.0)
 
 st_slope = st.selectbox(
     "ST Segment Slope",
-    ["Upward", "Flat", "Downward"],
-    help="""
-Upward: সাধারণত স্বাভাবিক  
-Flat: মাঝারি ঝুঁকি  
-Downward: হার্ট সমস্যার ঝুঁকি বেশি
-"""
+    [
+        "Upward (usually normal)",
+        "Flat (moderate risk)",
+        "Downward (higher risk)"
+    ]
 )
 
 # =========================
@@ -127,27 +111,25 @@ st.markdown("---")
 
 if st.button("🔍 Predict Heart Disease Risk", use_container_width=True):
 
-    # ---------- Mapping ----------
     chest_map = {
-        "Typical Angina": "TA",
-        "Atypical Angina": "ATA",
-        "Non-Anginal Pain": "NAP",
-        "Asymptomatic (কোনো ব্যথা নেই)": "ASY"
+        "Typical Angina (chest pain during physical activity)": "TA",
+        "Atypical Angina (unusual chest pain)": "ATA",
+        "Non-Anginal Pain (not heart related)": "NAP",
+        "Asymptomatic (no chest pain)": "ASY"
     }
 
     ecg_map = {
         "Normal": "Normal",
-        "ST-T Abnormality": "ST",
-        "Left Ventricular Hypertrophy": "LVH"
+        "ST-T Abnormality (ECG changes)": "ST",
+        "Left Ventricular Hypertrophy (thickened heart wall)": "LVH"
     }
 
     slope_map = {
-        "Upward": "Up",
-        "Flat": "Flat",
-        "Downward": "Down"
+        "Upward (usually normal)": "Up",
+        "Flat (moderate risk)": "Flat",
+        "Downward (higher risk)": "Down"
     }
 
-    # ---------- Raw Input ----------
     raw_input = {
         "Age": age,
         "RestingBP": resting_bp,
@@ -163,14 +145,11 @@ if st.button("🔍 Predict Heart Disease Risk", use_container_width=True):
     }
 
     input_df = pd.DataFrame([raw_input])
-
     for col in columns:
         if col not in input_df.columns:
             input_df[col] = 0
-
     input_df = input_df[columns]
 
-    # ---------- Prediction ----------
     scaled_input = scaler.transform(input_df)
     prediction = model.predict(scaled_input)[0]
 
@@ -187,33 +166,36 @@ if st.button("🔍 Predict Heart Disease Risk", use_container_width=True):
     else:
         st.success("✅ Low Risk of Heart Disease")
 
-    st.subheader(f"📊 Estimated Risk: {risk_percent:.1f}%")
+    st.write(f"📊 **Estimated Risk:** {risk_percent:.1f}%")
     st.progress(int(risk_percent))
 
-    st.subheader("🩺 Health Suggestions")
+    st.write("🩺 **Health Suggestions**")
+
     reason_found = False
 
     if age > 55:
-        st.write("🔸 বয়স বেশি হলে হার্ট ডিজিজের ঝুঁকি বাড়ে")
+        st.write("• Higher age increases the risk of heart disease.")
         reason_found = True
     if cholesterol > 240:
-        st.write("🔸 কোলেস্টেরল বেশি হলে রক্তনালী ব্লক হওয়ার ঝুঁকি")
+        st.write("• High cholesterol may lead to blocked blood vessels.")
         reason_found = True
     if fasting_bs == "Yes":
-        st.write("🔸 রক্তে সুগার বেশি হলে হার্ট ঝুঁকি বাড়ে")
+        st.write("• High blood sugar increases cardiovascular risk.")
         reason_found = True
     if exercise_angina == "Yes":
-        st.write("🔸 ব্যায়ামের সময় বুক ব্যথা গুরুত্বপূর্ণ লক্ষণ")
+        st.write("• Chest pain during exercise is an important warning sign.")
         reason_found = True
     if oldpeak > 2:
-        st.write("🔸 ECG তে বেশি ST depression দেখা গেছে")
+        st.write("• Significant ECG changes detected during exercise.")
         reason_found = True
 
     if not reason_found:
-        st.write("✅ আপনার দেওয়া তথ্য অনুযায়ী উল্লেখযোগ্য কোনো বড় ঝুঁকির কারণ ধরা পড়েনি।")
+        st.write("• No major high-risk factors were detected from the provided information.")
 
     st.markdown("---")
-    st.info("⚠️ এটি একটি AI-based prediction। চূড়ান্ত সিদ্ধান্তের জন্য অবশ্যই ডাক্তারের পরামর্শ নিন।")
+    st.info(
+        "This is an AI-based risk estimation tool and does not replace professional medical advice."
+    )
 
 # =========================
 # Footer
